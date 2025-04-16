@@ -7,12 +7,22 @@
 function extractTextContent(doc) {
   // Get all text nodes from the body
   const bodyText = doc.body.innerText || doc.body.textContent || '';
-  
-  // Limit to first 100 words
+
+  // Count total words
   const words = bodyText.split(/\s+/);
-  const firstHundredWords = words.slice(0, 100).join(' ');
-  
-  return firstHundredWords + (words.length > 100 ? '...' : '');
+  const wordCount = words.length;
+
+  // Calculate estimated reading time (average 200 words per minute)
+  const readingTime = Math.ceil(wordCount / 200);
+
+  // Limit to first 100 words for content preview
+  const firstHundredWords = words.slice(0, 100).join(' ') + (words.length > 100 ? '...' : '');
+
+  return {
+    content: firstHundredWords,
+    wordCount: wordCount,
+    readingTime: readingTime
+  };
 }
 
 // Function to clip the current page
@@ -23,7 +33,7 @@ function clipCurrentPage() {
     timestamp: new Date().toISOString(),
     content: extractTextContent(document)
   };
-  
+
   // Send the data to the background script
   chrome.runtime.sendMessage({
     action: 'clipPage',
@@ -44,7 +54,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
     return;
   }
-  
+
   if (message.action === 'clipPage') {
     clipCurrentPage();
     sendResponse({ success: true });
